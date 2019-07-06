@@ -3,175 +3,177 @@
 // ========================================================================
 var express = require('express');
 var app = express();
-var bcrypt = require('bcryptjs');
 
 // Importación Verificación por Token
 var mdAutenticacion = require('../middlewares/autenticacion');
 
 // Importación Modelo de Datos
-var Usuario = require('../schemas/Usuario.schema');
-
+var CentroSalud = require('../schemas/CentroSalud.schema');
 
 // ====================================================================
-// GET: OBTENER todos los Usuarios
+// GET: OBTENER todos los Centros de Salud  ,'rut_centro nombre_fantasia direccion razon_social email img fk_usuario'
 // ====================================================================
 app.get('/', (req, res) => {
 
     var desdeRegistro = req.query.desdeRegistro || 0;
     desdeRegistro = Number(desdeRegistro);
 
-    Usuario.find({}, 'nombre appaterno apmaterno email img role')
+    CentroSalud.find({})
+        .populate('fk_usuario', 'nombre appaterno appmaterno email')
         .skip(desdeRegistro)
         .limit(5)
-        .exec((err, usuarios) => {
+        .exec((err, centros) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Error cargando Datos de Usuario',
+                    mensaje: 'Error cargando Datos de Centros',
                     errors: err
                 });
             }
-            Usuario.countDocuments({}, (err, conteo) => {
+            CentroSalud.countDocuments({}, (err, conteo) => {
                 if (err) {
                     return res.status(500).json({
                         ok: false,
-                        mensaje: 'Error en Conteo Total de Registros de Usuario',
+                        mensaje: 'Error en conteo Total de Centros de Salud',
                         errors: err
                     });
                 }
                 res.status(200).json({
                     ok: true,
-                    mensaje: 'Get de Usuarios',
-                    usuarios: usuarios,
+                    mensaje: 'Get de Centros de Salud',
+                    centros: centros,
                     totalRegistros: conteo
                 });
             });
+
         });
 });
 
 
 // ====================================================================
-// GET: OBTENER UN usuario
+// GET: OBTENER UN centro de salud  ,'rut_centro nombre_fantasia direccion razon_social email img fk_usuario'
 // ====================================================================
 app.get('/:id', (req, res) => {
 
     var id = req.params.id;
     var body = req.body;
 
-    Usuario.findOne({ _id: id }, 'nombre appaterno apmaterno email img role')
-        .exec((err, usuario) => {
+    CentroSalud.findOne({ _id: id })
+        .populate('fk_usuario', 'nombre appaterno apmaterno email')
+        .exec((err, centro) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Error Buscando al Usuario',
+                    mensaje: 'Error Buscando Centro de Salud',
                     errors: err
                 });
             }
             res.status(200).json({
                 ok: true,
-                mensaje: 'Usuario encontrado',
-                usuario: usuario
+                mensaje: 'Centro de Salud encontrado',
+                centro: centro
             });
         });
 });
 
 
+
 // ====================================================================
-// PUT: ACTUALIZAR Usuario
+// PUT: ACTUALIZAR Centro de Salud
 // ====================================================================
 app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
     var id = req.params.id;
     var body = req.body;
 
-    Usuario.findById(id, (err, usuario) => {
+    CentroSalud.findById(id, (err, centro) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al Buscar Usuario',
+                mensaje: 'Error al Buscar Centro de Salud',
                 errors: err
             });
         }
-        if (!usuario) {
+        if (!centro) {
             return res.status(400).json({
                 ok: false,
-                mensaje: `El usuario con el ID {id} no existe.`,
-                errors: { message: 'No existe un usuario con ese ID' }
+                mensaje: `El Centro de Salud con el ID {id} no existe.`,
+                errors: { message: 'No existe Centro de Salud con ese ID' }
             });
         }
-        usuario.nombre = body.nombre;
-        usuario.email = body.email;
-        usuario.role = body.role;
+        centro.rut_centro = body.rut_centro;
+        centro.nombre_fantasia = body.nombre_fantasia;
+        centro.direccion = body.direccion;
+        centro.razon_social = body.razon_social;
 
-        usuario.save((err, usuarioGuardado) => {
+        centro.save((err, centroGuardado) => {
             if (err) {
                 return res.status(400).json({
                     ok: false,
-                    mensaje: 'Error al Actualizar Usuario',
+                    mensaje: 'Error al Actualizar Centro de Salud',
                     errors: err
                 });
             }
             res.status(200).json({
                 ok: true,
-                mensaje: 'Usuario Actualizado Correctamente',
-                usuario: usuarioGuardado
+                mensaje: 'Centro de Salud Actualizado Correctamente',
+                centro_salud: centroGuardado
             });
         });
     });
 });
 
-
 // ======================================================================================
-// POST: CREAR Usuario (verificaToken NO es  llamado con parentesis en los parámetros)
+// POST: CREAR Centro de Salud (verificaToken NO es  llamado con parentesis en los parámetros) 
 // ======================================================================================
 app.post('/', mdAutenticacion.verificaToken, (req, res) => {
 
     var body = req.body;
     // Falta función para validar si vienen datos en los campos correspondientes
     // sobre todo en la Contraseña para poder encriptarla.
-    var nuevoUsuario = new Usuario({
-        nombre: body.nombre,
-        appaterno: body.appaterno,
-        apmaterno: body.apmaterno,
+    var nuevoCentroSalud = new CentroSalud({
+        rut_centro: body.rut_centro,
+        nombre_fantasia: body.nombre_fantasia,
+        direccion: body.direccion,
+        razon_social: body.razon_social,
         email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
         img: body.img,
-        role: body.role
+        id_usuario: req.usuario._id
     });
-    nuevoUsuario.save((err, usuarioGuardado) => {
+    nuevoCentroSalud.save((err, centroGuardado) => {
         if (err) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Error al Crear Usuario',
+                mensaje: 'Error al Crear Centro de Salud',
                 errors: err
             });
         }
         res.status(201).json({
             ok: true,
-            mensaje: 'Usuario creado Exitosamente',
-            usuario: usuarioGuardado
+            mensaje: 'Centro creado Exitosamente',
+            centro_salud: centroGuardado
         });
     });
 });
 
 
 // ====================================================================
-// ELIMINAR Usuario por el ID
+// ELIMINAR Centro de Salud por el ID
 // ====================================================================
 app.delete('/:id', mdAutenticacion.verificaToken, (req, res) => {
     var id = req.params.id;
 
-    Usuario.findByIdAndRemove(id, (err, usuarioBorrado) => {
+    CentroSalud.findByIdAndRemove(id, (err, centroBorrado) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al Eliminar el Usuario',
+                mensaje: 'Error al Eliminar el Centro de Salud',
                 errors: err
             });
         }
         res.status(200).json({
             ok: true,
-            mensaje: 'Usuario Eliminado con Éxito',
-            usuario: usuarioBorrado
+            mensaje: 'Centro de Salud Eliminado con Éxito',
+            centro: centroBorrado
         });
     });
 });

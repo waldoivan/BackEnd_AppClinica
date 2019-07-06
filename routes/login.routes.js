@@ -10,7 +10,7 @@ var jwt = require('jsonwebtoken');
 var SEED = require('../config/config').SEED;
 
 // Importación Modelo de Datos
-var Usuario = require('../models/usuario.model');
+var Usuario = require('../schemas/Usuario.schema');
 
 app.post('/', (req, res, next) => {
 

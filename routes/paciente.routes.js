@@ -3,175 +3,162 @@
 // ========================================================================
 var express = require('express');
 var app = express();
-var bcrypt = require('bcryptjs');
 
 // Importación Verificación por Token
 var mdAutenticacion = require('../middlewares/autenticacion');
 
 // Importación Modelo de Datos
-var Usuario = require('../schemas/Usuario.schema');
-
+var Paciente = require('../schemas/Paciente.schema');
 
 // ====================================================================
-// GET: OBTENER todos los Usuarios
+// GET: OBTENER todos los Pacientes
 // ====================================================================
 app.get('/', (req, res) => {
 
-    var desdeRegistro = req.query.desdeRegistro || 0;
-    desdeRegistro = Number(desdeRegistro);
-
-    Usuario.find({}, 'nombre appaterno apmaterno email img role')
-        .skip(desdeRegistro)
-        .limit(5)
-        .exec((err, usuarios) => {
+    Paciente.find({}, 'rut_paciente nombre appaterno apmaterno email img fk_centro')
+        .populate('fk_usuario', 'nombre appaterno apmaterno email')
+        .exec((err, pacientes) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Error cargando Datos de Usuario',
+                    mensaje: 'Error cargando Datos de Pacientes',
                     errors: err
                 });
             }
-            Usuario.countDocuments({}, (err, conteo) => {
-                if (err) {
-                    return res.status(500).json({
-                        ok: false,
-                        mensaje: 'Error en Conteo Total de Registros de Usuario',
-                        errors: err
-                    });
-                }
-                res.status(200).json({
-                    ok: true,
-                    mensaje: 'Get de Usuarios',
-                    usuarios: usuarios,
-                    totalRegistros: conteo
-                });
+            res.status(200).json({
+                ok: true,
+                mensaje: 'Get de Pacientes',
+                pacientes: pacientes
             });
         });
 });
 
 
 // ====================================================================
-// GET: OBTENER UN usuario
+// GET: OBTENER UN Paciente
 // ====================================================================
 app.get('/:id', (req, res) => {
 
     var id = req.params.id;
     var body = req.body;
 
-    Usuario.findOne({ _id: id }, 'nombre appaterno apmaterno email img role')
-        .exec((err, usuario) => {
+    Paciente.findOne({ _id: id }, 'rut_paciente nombre appaterno apmaterno email img fk_centro')
+        .populate('fk_usuario', 'nombre appaterno apmaterno email')
+        .exec((err, paciente) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Error Buscando al Usuario',
+                    mensaje: 'Error Buscando Paciente',
                     errors: err
                 });
             }
             res.status(200).json({
                 ok: true,
-                mensaje: 'Usuario encontrado',
-                usuario: usuario
+                mensaje: 'Paciente encontrado',
+                paciente: paciente
             });
         });
 });
 
 
+
 // ====================================================================
-// PUT: ACTUALIZAR Usuario
+// PUT: ACTUALIZAR Paciente
 // ====================================================================
 app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
     var id = req.params.id;
     var body = req.body;
 
-    Usuario.findById(id, (err, usuario) => {
+    Paciente.findById(id, (err, paciente) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al Buscar Usuario',
+                mensaje: 'Error al Buscar Paciente',
                 errors: err
             });
         }
-        if (!usuario) {
+        if (!paciente) {
             return res.status(400).json({
                 ok: false,
-                mensaje: `El usuario con el ID {id} no existe.`,
-                errors: { message: 'No existe un usuario con ese ID' }
+                mensaje: `El Paciente con el ID {id} no existe.`,
+                errors: { message: 'No existe Paciente con ese ID' }
             });
         }
-        usuario.nombre = body.nombre;
-        usuario.email = body.email;
-        usuario.role = body.role;
+        paciente.rut_paciente = body.rut_paciente;
+        paciente.nombre = body.nombre;
+        paciente.appaterno = body.appaterno;
+        paciente.apmaterno = body.apmaterno;
+        paciente.fk_centro = body.fk_centro;
 
-        usuario.save((err, usuarioGuardado) => {
+        paciente.save((err, pacienteGuardado) => {
             if (err) {
                 return res.status(400).json({
                     ok: false,
-                    mensaje: 'Error al Actualizar Usuario',
+                    mensaje: 'Error al Actualizar Paciente',
                     errors: err
                 });
             }
             res.status(200).json({
                 ok: true,
-                mensaje: 'Usuario Actualizado Correctamente',
-                usuario: usuarioGuardado
+                mensaje: 'Paciente Actualizado Correctamente',
+                paciente: pacienteGuardado
             });
         });
     });
 });
 
-
 // ======================================================================================
-// POST: CREAR Usuario (verificaToken NO es  llamado con parentesis en los parámetros)
+// POST: CREAR Paciente (verificaToken NO es  llamado con parentesis en los parámetros) 
 // ======================================================================================
 app.post('/', mdAutenticacion.verificaToken, (req, res) => {
 
     var body = req.body;
     // Falta función para validar si vienen datos en los campos correspondientes
     // sobre todo en la Contraseña para poder encriptarla.
-    var nuevoUsuario = new Usuario({
+    var nuevoPaciente = new Paciente({
+        rut_paciente: body.rut_paciente,
         nombre: body.nombre,
         appaterno: body.appaterno,
         apmaterno: body.apmaterno,
         email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
         img: body.img,
-        role: body.role
+        fk_centro: body.fk_centro
     });
-    nuevoUsuario.save((err, usuarioGuardado) => {
+    nuevoPaciente.save((err, pacienteGuardado) => {
         if (err) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Error al Crear Usuario',
+                mensaje: 'Error al grabar Paciente',
                 errors: err
             });
         }
         res.status(201).json({
             ok: true,
-            mensaje: 'Usuario creado Exitosamente',
-            usuario: usuarioGuardado
+            mensaje: 'Paciente creado Exitosamente',
+            paciente: pacienteGuardado
         });
     });
 });
 
 
 // ====================================================================
-// ELIMINAR Usuario por el ID
+// ELIMINAR Paciente por el ID
 // ====================================================================
 app.delete('/:id', mdAutenticacion.verificaToken, (req, res) => {
     var id = req.params.id;
 
-    Usuario.findByIdAndRemove(id, (err, usuarioBorrado) => {
+    Paciente.findByIdAndRemove(id, (err, pacienteBorrado) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al Eliminar el Usuario',
+                mensaje: 'Error al Eliminar el Paciente',
                 errors: err
             });
         }
         res.status(200).json({
             ok: true,
-            mensaje: 'Usuario Eliminado con Éxito',
-            usuario: usuarioBorrado
+            mensaje: 'Paciente Eliminado con Éxito',
+            paciente: pacienteBorrado
         });
     });
 });
