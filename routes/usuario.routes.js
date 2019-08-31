@@ -5,6 +5,7 @@ var express = require('express');
 var app = express();
 var bcrypt = require('bcryptjs');
 
+
 // Importación Verificación por Token
 var mdAutenticacion = require('../middlewares/autenticacion');
 
@@ -20,7 +21,7 @@ app.get('/', (req, res) => {
     var desdeRegistro = req.query.desdeRegistro || 0;
     desdeRegistro = Number(desdeRegistro);
 
-    Usuario.find({}, 'nombre appaterno apmaterno email img role')
+    Usuario.find({}, 'nombre appaterno apmaterno email img role google')
         .skip(desdeRegistro)
         .limit(5)
         .exec((err, usuarios) => {
@@ -121,9 +122,11 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
 
 
 // ======================================================================================
-// POST: CREAR Usuario (verificaToken NO es  llamado con parentesis en los parámetros)
+// POST: CREAR un Nuevo Usuario
+// sacamos el mdAutenticacion.verificaToken, para conectar el frontend
+// ver si es necesario incluirlo despues
 // ======================================================================================
-app.post('/', mdAutenticacion.verificaToken, (req, res) => {
+app.post('/', (req, res) => {
 
     var body = req.body;
     // Falta función para validar si vienen datos en los campos correspondientes

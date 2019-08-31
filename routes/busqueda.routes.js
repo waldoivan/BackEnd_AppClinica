@@ -5,7 +5,7 @@ var express = require('express');
 var app = express();
 
 var CentrosSalud = require('../schemas/CentroSalud.schema');
-var Medicos = require('../schemas/Medico.schema');
+var ProfesionalesSalud = require('../schemas/ProfesionalSalud.schema');
 var Usuarios = require('../schemas/Usuario.schema');
 
 
@@ -20,7 +20,7 @@ app.get('/todo/:busqueda', (req, res, next) => {
     //Gestiona las promesas (ES6)
     Promise.all([
             buscarCentrosSalud(busqueda, regex),
-            buscarMedicos(busqueda, regex),
+            buscarProfesionalesSalud(busqueda, regex),
             buscarUsuarios(busqueda, regex)
         ])
         .then(respuestas => {
@@ -28,7 +28,7 @@ app.get('/todo/:busqueda', (req, res, next) => {
                 ok: true,
                 mensaje: 'Búsqueda realizada con Éxito',
                 centros: respuestas[0],
-                medicos: respuestas[1],
+                profesionalessalud: respuestas[1],
                 usuarios: respuestas[2]
             });
         });
@@ -51,8 +51,8 @@ app.get('/coleccion/:tabla/:busqueda', (req, res, next) => {
             promesa = buscarCentrosSalud(busqueda, regex);
             break;
 
-        case 'medicos':
-            promesa = buscarMedicos(busqueda, regex);
+        case 'profesionalessalud':
+            promesa = buscarProfesionalesSalud(busqueda, regex);
             break;
 
         case 'usuarios':
@@ -62,11 +62,10 @@ app.get('/coleccion/:tabla/:busqueda', (req, res, next) => {
         default:
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Las búsquedas habilitadas son: usuarios, médicos y centros de salud',
+                mensaje: 'Las búsquedas habilitadas son: usuarios, profesionales de salud y centros de salud',
                 error: { message: 'Criterios de Búsqueda No válidos' }
             });
     }
-
     promesa.then(data => {
         res.status(200).json({
             ok: true,
@@ -80,10 +79,27 @@ app.get('/coleccion/:tabla/:busqueda', (req, res, next) => {
 // ========================================
 // Buscar Centros de Salud (retorna Promesa)
 // ========================================
+// function buscarCentrosSalud(busqueda, regex) {
+//     return new Promise((resolve, reject) => {
+
+//         CentrosSalud.find({ nombre_fantasia: regex })
+//             .populate('fk_usuario', 'nombre appaterno apmaterno')
+//             .exec((err, centros) => {
+//                 if (!err) {
+//                     resolve(centros);
+//                 } else {
+//                     reject('Error al cargar Centros de Salud', err);
+//                 }
+//             });
+
+//     });
+// }
+
+
 function buscarCentrosSalud(busqueda, regex) {
     return new Promise((resolve, reject) => {
 
-        CentrosSalud.find({ nombre_fantasia: regex })
+        CentrosSalud.find({ nombrefantasia: regex })
             .populate('fk_usuario', 'nombre appaterno apmaterno')
             .exec((err, centros) => {
                 if (!err) {
@@ -92,24 +108,6 @@ function buscarCentrosSalud(busqueda, regex) {
                     reject('Error al cargar Centros de Salud', err);
                 }
             });
-
-    });
-}
-
-
-// ========================================
-// Buscar Médicos (retorna Promesa)
-// ========================================
-function buscarMedicos(busqueda, regex) {
-    return new Promise((resolve, reject) => {
-
-        Medicos.find({ nombre: regex }, (err, medicos) => {
-            if (!err) {
-                resolve(medicos);
-            } else {
-                reject('Error al cargar Médicos', err);
-            }
-        });
 
     });
 }
@@ -129,6 +127,24 @@ function buscarUsuarios(busqueda, regex) {
                     reject('Error al cargar Usuarios', err);
                 }
             });
+
+    });
+}
+
+
+// ========================================
+// Buscar Profesionales Salud (retorna Promesa)
+// ========================================
+function buscarProfesionalesSalud(busqueda, regex) {
+    return new Promise((resolve, reject) => {
+
+        ProfesionalesSalud.find({ nombre: regex }, (err, profesionalessalud) => {
+            if (!err) {
+                resolve(profesionalessalud);
+            } else {
+                reject('Error al cargar Profesionales de Salud', err);
+            }
+        });
 
     });
 }

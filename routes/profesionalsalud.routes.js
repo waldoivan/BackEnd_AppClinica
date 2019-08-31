@@ -8,39 +8,41 @@ var app = express();
 var mdAutenticacion = require('../middlewares/autenticacion');
 
 // Importación Modelo de Datos
-var Medico = require('../schemas/Medico.schema');
+var ProfesionalSalud = require('../schemas/ProfesionalSalud.schema');
 
 // ====================================================================
-// GET: OBTENER todos los Medicos
+// GET: OBTENER todos los Prfesionales de Salud
 // ====================================================================
 app.get('/', (req, res) => {
 
     var desdeRegistro = req.query.desdeRegistro || 0;
     desdeRegistro = Number(desdeRegistro);
 
-    Medico.find({}, 'rut_medico nombre appaterno apmaterno email img fk_usuario fk_centro')
+    ProfesionalSalud.find({}, 'rut nombre appaterno apmaterno email img fk_usuario fk_centro')
         .populate('fk_usuario', 'nombre appaterno apmaterno email')
         .populate('fk_centro', 'rut_centro nombre_fantasia direccion')
-        .exec((err, medicos) => {
+        .skip(desdeRegistro)
+        .limit(5)
+        .exec((err, profesionalessalud) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Error cargando Datos de Medicos',
+                    mensaje: 'Error cargando Datos del Profesional de Salud',
                     errors: err
                 });
             }
-            Medico.countDocuments({}, (err, conteo) => {
+            ProfesionalSalud.countDocuments({}, (err, conteo) => {
                 if (err) {
                     return res.status(500).json({
                         ok: false,
-                        mensaje: 'Error en conteo Total de Registros de Médicos',
+                        mensaje: 'Error en conteo Total de Registros de Profesionales',
                         errors: err
                     });
                 }
                 res.status(200).json({
                     ok: true,
-                    mensaje: 'Get de Medicos',
-                    medicos: medicos,
+                    mensaje: 'Get de Profesionales de Salud',
+                    profesionalessalud: profesionalessalud,
                     totalRegistros: conteo
                 });
             });
@@ -49,28 +51,28 @@ app.get('/', (req, res) => {
 
 
 // ====================================================================
-// GET: OBTENER UN Medico
+// GET: OBTENER UN Profesional de Salud
 // ====================================================================
 app.get('/:id', (req, res) => {
 
     var id = req.params.id;
     var body = req.body;
 
-    Medico.findOne({ _id: id }, 'rut_medico nombre appaterno apmaterno email img fk_centro')
+    ProfesionalSalud.findOne({ _id: id }, 'rut nombre appaterno apmaterno email img fk_centro')
         .populate('fk_usuario', 'nombre appaterno apmaterno email')
         .populate('fk_centro', 'rut_centro nombre_fantasia direccion')
-        .exec((err, medico) => {
+        .exec((err, profesionalsalud) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Error Buscando Medico',
+                    mensaje: 'Error Buscando Profesional de Salud',
                     errors: err
                 });
             }
             res.status(200).json({
                 ok: true,
-                mensaje: 'Medico encontrado',
-                medico: medico
+                mensaje: 'Profesional de Salud encontrado',
+                profesionalsalud: profesionalsalud
             });
         });
 });
@@ -78,62 +80,62 @@ app.get('/:id', (req, res) => {
 
 
 // ====================================================================
-// PUT: ACTUALIZAR Medico
+// PUT: ACTUALIZAR Profesional de Salud
 // ====================================================================
 app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
     var id = req.params.id;
     var body = req.body;
 
-    Medico.findById(id, (err, medico) => {
+    ProfesionalSalud.findById(id, (err, profesionalsalud) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al Buscar Medico',
+                mensaje: 'Error al Buscar Profesional de Salud',
                 errors: err
             });
         }
-        if (!medico) {
+        if (!profesionalsalud) {
             return res.status(400).json({
                 ok: false,
-                mensaje: `El Medico con el ID {id} no existe.`,
-                errors: { message: 'No existe Medico con ese ID' }
+                mensaje: `El Profesional de Salud con el ID {id} no existe.`,
+                errors: { message: 'No existe Profesional de Salud con ese ID' }
             });
         }
-        medico.rut_medico = body.rut_medico;
-        medico.nombre = body.nombre;
-        medico.appaterno = body.appaterno;
-        medico.appaterno = body.appaterno;
-        medico.apmaterno = body.apmaterno;
-        medico.fk_usuario = body.fk_usuario;
-        medico.fk_centro = body.fk_centro;
+        profesionalsalud.rut = body.rut;
+        profesionalsalud.nombre = body.nombre;
+        profesionalsalud.appaterno = body.appaterno;
+        profesionalsalud.appaterno = body.appaterno;
+        profesionalsalud.apmaterno = body.apmaterno;
+        profesionalsalud.fk_usuario = body.fk_usuario;
+        profesionalsalud.fk_centro = body.fk_centro;
 
-        medico.save((err, medicoGuardado) => {
+        profesionalsalud.save((err, profesionalSaludGuardado) => {
             if (err) {
                 return res.status(400).json({
                     ok: false,
-                    mensaje: 'Error al Actualizar el Medico',
+                    mensaje: 'Error al Actualizar el Profesional de Salud',
                     errors: err
                 });
             }
             res.status(200).json({
                 ok: true,
-                mensaje: 'Medico Actualizado Correctamente',
-                medico: medicoGuardado
+                mensaje: 'Profesional de Salud Actualizado Correctamente',
+                profesionalsalud: profesionalSaludGuardado
             });
         });
     });
 });
 
 // ======================================================================================
-// POST: CREAR Medico (verificaToken NO es  llamado con parentesis en los parámetros) 
+// POST: CREAR Profesional de Salud (verificaToken NO es  llamado con parentesis en los parámetros) 
 // ======================================================================================
 app.post('/', mdAutenticacion.verificaToken, (req, res) => {
 
     var body = req.body;
     // Falta función para validar si vienen datos en los campos correspondientes
     // sobre todo en la Contraseña para poder encriptarla.
-    var nuevoMedico = new Medico({
-        rut_medico: body.rut_medico,
+    var nuevoProfesionalSalud = new ProfesionalSalud({
+        rut: body.rut,
         nombre: body.nombre,
         appaterno: body.appaterno,
         apmaterno: body.apmaterno,
@@ -142,41 +144,41 @@ app.post('/', mdAutenticacion.verificaToken, (req, res) => {
         fk_usuario: body.fk_usuario,
         fk_centro: body.fk_centro
     });
-    nuevoMedico.save((err, medicoGuardado) => {
+    nuevoProfesionalSalud.save((err, profesionalSaludGuardado) => {
         if (err) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Error al Crear Medico',
+                mensaje: 'Error al Crear Profesional de Salud',
                 errors: err
             });
         }
         res.status(201).json({
             ok: true,
-            mensaje: 'Medico creado Exitosamente',
-            medico: medicoGuardado
+            mensaje: 'Profesional de Salud creado Exitosamente',
+            profesionalsalud: profesionalSaludGuardado
         });
     });
 });
 
 
 // ====================================================================
-// ELIMINAR Medico por el ID
+// ELIMINAR Profesional de Salud por el ID
 // ====================================================================
 app.delete('/:id', mdAutenticacion.verificaToken, (req, res) => {
     var id = req.params.id;
 
-    Medico.findByIdAndRemove(id, (err, medicoBorrado) => {
+    ProfesionalSalud.findByIdAndRemove(id, (err, profesionalSaludBorrado) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al Eliminar Medico',
+                mensaje: 'Error al Eliminar Profesional de Salud',
                 errors: err
             });
         }
         res.status(200).json({
             ok: true,
-            mensaje: 'Medico Eliminado con Éxito',
-            medico: medicoBorrado
+            mensaje: 'Profesional de Salud Eliminado con Éxito',
+            profesionalsalud: profesionalSaludBorrado
         });
     });
 });

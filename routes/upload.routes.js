@@ -13,7 +13,7 @@ app.use(fileUpload());
 
 // Importacion Schemas
 var CentrosSalud = require('../schemas/CentroSalud.schema');
-var Medicos = require('../schemas/Medico.schema');
+var ProfesionalesSalud = require('../schemas/ProfesionalSalud.schema');
 var Usuarios = require('../schemas/Usuario.schema');
 
 
@@ -24,7 +24,7 @@ app.put('/:tipo/:id', (req, res, next) => {
     var id = req.params.id;
 
     // Colecciones Permitidas
-    var coleccionesPermitidas = ['medicos', 'centrossalud', 'usuarios'];
+    var coleccionesPermitidas = ['profesionalessalud', 'centrossalud', 'usuarios'];
 
     if (coleccionesPermitidas.indexOf(tipoArchivo) < 0) {
         return res.status(400).json({
@@ -123,40 +123,40 @@ function subirPorColeccion(tipoArchivo, id, nombreArchivo, res) {
         });
     }
 
-    if (tipoArchivo === 'medicos') {
+    if (tipoArchivo === 'profesionalessalud') {
 
-        Medicos.findById(id, (err, medico) => {
+        ProfesionalesSalud.findById(id, (err, profesionalsalud) => {
 
-            if (!medico) {
+            if (!profesionalsalud) {
                 return res.status(400).json({
                     ok: false,
                     mensaje: 'Médico NO existe',
-                    errors: { message: 'Médico No existe' }
+                    errors: { message: 'Profesional de Salud No existe' }
                 });
             }
 
-            var pathViejo = './uploads/medicos/' + medico.img;
+            var pathViejo = './uploads/profesionalsalud/' + profesionalessalud.img;
 
             //Si existe archivo, elimina imagen anterior
             if (fs.existsSync(pathViejo)) {
                 fs.unlinkSync(pathViejo);
             }
 
-            medico.img = nombreArchivo;
+            profesionalsalud.img = nombreArchivo;
 
-            medico.save((err, medicoActualizado) => {
+            profesionalsalud.save((err, profesionalSaludActualizado) => {
 
                 if (err) {
                     return res.status(500).json({
                         ok: false,
-                        mensaje: 'Error al Actualizar Imagen del Médico',
+                        mensaje: 'Error al Actualizar Imagen del Profesional de Salud',
                         errors: err
                     });
                 }
                 return res.status(200).json({
                     ok: true,
                     mensaje: 'Imagen de Médico Actualizada Correctamente',
-                    medico: medicoActualizado
+                    profesionalsalud: profesionalSaludActualizado
                 });
             });
         });

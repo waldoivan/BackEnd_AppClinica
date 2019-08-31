@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
                 res.status(200).json({
                     ok: true,
                     mensaje: 'Get de Centros de Salud',
-                    centros: centros,
+                    centrossalud: centros,
                     totalRegistros: conteo
                 });
             });
@@ -56,9 +56,8 @@ app.get('/', (req, res) => {
 app.get('/:id', (req, res) => {
 
     var id = req.params.id;
-    var body = req.body;
 
-    CentroSalud.findOne({ _id: id })
+    CentroSalud.findById(id)
         .populate('fk_usuario', 'nombre appaterno apmaterno email')
         .exec((err, centro) => {
             if (err) {
@@ -68,10 +67,17 @@ app.get('/:id', (req, res) => {
                     errors: err
                 });
             }
+            if (!centro) {
+                return this.response.status(400).json({
+                    ok: false,
+                    mensaje: 'El Centro de Salud con id ' + id + 'no existe.',
+                    errors: { message: 'NO existe un centro de salud con ese ID' }
+                });
+            }
             res.status(200).json({
                 ok: true,
                 mensaje: 'Centro de Salud encontrado',
-                centro: centro
+                centrosalud: centro
             });
         });
 });
@@ -100,10 +106,10 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
                 errors: { message: 'No existe Centro de Salud con ese ID' }
             });
         }
-        centro.rut_centro = body.rut_centro;
-        centro.nombre_fantasia = body.nombre_fantasia;
+        centro.rutcentro = body.rutcentro;
+        centro.nombrefantasia = body.nombrefantasia;
+        centro.razonsocial = body.razonsocial;
         centro.direccion = body.direccion;
-        centro.razon_social = body.razon_social;
 
         centro.save((err, centroGuardado) => {
             if (err) {
@@ -116,7 +122,7 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
             res.status(200).json({
                 ok: true,
                 mensaje: 'Centro de Salud Actualizado Correctamente',
-                centro_salud: centroGuardado
+                centrosalud: centroGuardado
             });
         });
     });
@@ -131,11 +137,12 @@ app.post('/', mdAutenticacion.verificaToken, (req, res) => {
     // Falta función para validar si vienen datos en los campos correspondientes
     // sobre todo en la Contraseña para poder encriptarla.
     var nuevoCentroSalud = new CentroSalud({
-        rut_centro: body.rut_centro,
-        nombre_fantasia: body.nombre_fantasia,
+        rutcentro: body.rutcentro,
+        nombrefantasia: body.nombrefantasia,
+        razonsocial: body.razonsocial,
         direccion: body.direccion,
-        razon_social: body.razon_social,
         email: body.email,
+        estatal: body.estatal,
         img: body.img,
         id_usuario: req.usuario._id
     });
@@ -150,7 +157,7 @@ app.post('/', mdAutenticacion.verificaToken, (req, res) => {
         res.status(201).json({
             ok: true,
             mensaje: 'Centro creado Exitosamente',
-            centro_salud: centroGuardado
+            centrosalud: centroGuardado
         });
     });
 });
@@ -173,7 +180,7 @@ app.delete('/:id', mdAutenticacion.verificaToken, (req, res) => {
         res.status(200).json({
             ok: true,
             mensaje: 'Centro de Salud Eliminado con Éxito',
-            centro: centroBorrado
+            centrosalud: centroBorrado
         });
     });
 });

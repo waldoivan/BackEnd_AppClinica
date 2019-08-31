@@ -10,7 +10,7 @@ var Schema = mongoose.Schema;
 
 var PacienteSchema = new Schema({
 
-    rut_paciente: { type: String, required: [true, 'El Nombre es necesario'] },
+    rutpaciente: { type: String, required: [true, 'El Nombre es necesario'] },
     nombre: { type: String, required: [true, 'El Nombre es necesario'] },
     appaterno: { type: String, required: [true, 'El Apellido Paterno es necesario'] },
     apmaterno: { type: String, required: [true, 'El Apellido Materno es necesario'] },
