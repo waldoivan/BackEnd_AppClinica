@@ -4,6 +4,27 @@
 var express = require('express');
 var app = express();
 
+///////////////////////
+const router = express.Router();
+const bodyparser = require('body-parser');
+const oracledb = require('oracledb');
+//Authoriser tous les requettes cors)
+const cors = require('cors');
+app.use(cors());
+
+app.use(bodyparser.json());
+
+///Pour changer le format de la requete 
+app.use(bodyparser.urlencoded({
+    extended: true
+}));
+
+var connAttrs = {
+    user: "hr",
+    password: "hr",
+    connectString: "170.239.87.250:1521/xepdb1"
+};
+
 // Importación Verificación por Token
 var mdAutenticacion = require('../middlewares/autenticacion');
 
@@ -15,38 +36,53 @@ var ProfesionalSalud = require('../schemas/ProfesionalSalud.schema');
 // ====================================================================
 app.get('/', (req, res) => {
 
-    var desdeRegistro = req.query.desdeRegistro || 0;
-    desdeRegistro = Number(desdeRegistro);
+    /////Consulta Profesionales////// done
+    app.get('/profesionales', function(req, res) {
+        "use strict";
 
-    ProfesionalSalud.find({}, 'rut nombre appaterno apmaterno email img fk_usuario fk_centro')
-        .populate('fk_usuario', 'nombre appaterno apmaterno email')
-        .populate('fk_centro', 'rut_centro nombre_fantasia direccion')
-        .skip(desdeRegistro)
-        .limit(5)
-        .exec((err, profesionalessalud) => {
+        oracledb.getConnection(connAttrs, function(err, connection) {
             if (err) {
-                return res.status(500).json({
-                    ok: false,
-                    mensaje: 'Error cargando Datos del Profesional de Salud',
-                    errors: err
-                });
+                // Error connecting to DB
+                res.set('Content-Type', 'application/json');
+                res.status(500).send(JSON.stringify({
+                    status: 500,
+                    message: "Error connecting to DB",
+                    detailed_message: err.message
+                }));
+                return;
             }
-            ProfesionalSalud.countDocuments({}, (err, conteo) => {
+            connection.execute("SELECT * FROM clin_profesionales", {}, {
+                outFormat: oracledb.OBJECT // Return the result as Object
+            }, function(err, result) {
                 if (err) {
-                    return res.status(500).json({
-                        ok: false,
-                        mensaje: 'Error en conteo Total de Registros de Profesionales',
-                        errors: err
-                    });
+                    res.set('Content-Type', 'application/json');
+                    res.status(500).send(JSON.stringify({
+                        status: 500,
+                        message: "Error getting the dba_tablespaces",
+                        detailed_message: err.message
+                    }));
+                } else {
+                    res.header('Access-Control-Allow-Origin', '*');
+                    res.header('Access-Control-Allow-Headers', 'Content-Type');
+                    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+                    res.contentType('application/json').status(200);
+                    res.send(JSON.stringify(result.rows));
+
                 }
-                res.status(200).json({
-                    ok: true,
-                    mensaje: 'Get de Profesionales de Salud',
-                    profesionalessalud: profesionalessalud,
-                    totalRegistros: conteo
-                });
+                // Release the connection
+                connection.release(
+                    function(err) {
+                        if (err) {
+                            console.error(err.message);
+                        } else {
+                            console.log("GET /sendTablespace : Connection released");
+                        }
+                    });
             });
         });
+    });
+
+
 });
 
 

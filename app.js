@@ -12,8 +12,9 @@ var colors = require('colors'); // activa uso de colores en consola de Node
 // Inicializa Variables para la aplicación
 // ============================================
 var app = express();
-var port = 3000;
-var db = 'mongodb://localhost:27017/DB_AppClinica';
+var port = 4201;
+// var port = 3000;
+// var db = 'mongodb://localhost:27017/DB_AppClinica';
 
 
 // ============================================
@@ -53,10 +54,10 @@ var imgRoutes = require('./routes/download.routes');
 // =============================================
 // Conexion a la Base de Datos
 // =============================================
-mongoose.connect(db, { useNewUrlParser: true }, (err, res) => {
-    if (err) throw err;
-    console.log('Base de Datos AppClinica: ', 'online'.green);
-});
+// mongoose.connect(db, { useNewUrlParser: true }, (err, res) => {
+//     if (err) throw err;
+//     console.log('Base de Datos AppClinica: ', 'online'.green);
+// });
 
 
 // =============================================
@@ -81,5 +82,6 @@ app.use('/', appRoutes);
 // Escuchar Peticiones
 // ==============================================
 app.listen(port, () => {
-    console.log('Express Server Puerto 3000: ', 'online'.green);
+    console.log('Express Server Puerto 4201: ', 'online'.green);
+    // console.log('Express Server Puerto 3000: ', 'online'.green);
 });
