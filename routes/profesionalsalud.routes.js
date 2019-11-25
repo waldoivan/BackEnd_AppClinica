@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
                 }));
                 return;
             }
-            connection.execute("SELECT * FROM clin_profesionales", {}, {
+            connection.execute("SELECT img, rut, appaterno, apmaterno, emaail FROM clin_profesionales", {}, {
                 outFormat: oracledb.OBJECT // Return the result as Object
             }, function(err, result) {
                 if (err) {
