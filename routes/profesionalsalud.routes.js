@@ -11,7 +11,7 @@ var mdAutenticacion = require('../middlewares/autenticacion');
 var ProfesionalSalud = require('../schemas/ProfesionalSalud.schema');
 
 // ====================================================================
-// GET: OBTENER todos los Prfesionales de Salud
+// GET: OBTENER todos los Profesionales de Salud
 // ====================================================================
 app.get('/', (req, res) => {
 
