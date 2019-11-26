@@ -4,13 +4,12 @@
 var express = require('express');
 var app = express();
 
-///////////////////////
-const router = express.Router();
+// Importación Verificación por Token
+var mdAutenticacion = require('../middlewares/autenticacion');
+
+// Oracle
 const bodyparser = require('body-parser');
 const oracledb = require('oracledb');
-//Authoriser tous les requettes cors)
-const cors = require('cors');
-app.use(cors());
 
 app.use(bodyparser.json());
 
@@ -25,65 +24,69 @@ var connAttrs = {
     connectString: "170.239.87.250:1521/xepdb1"
 };
 
-// Importación Verificación por Token
-var mdAutenticacion = require('../middlewares/autenticacion');
-
 // Importación Modelo de Datos
-var ProfesionalSalud = require('../schemas/ProfesionalSalud.schema');
+// var ProfesionalSalud = require('../schemas/ProfesionalSalud.schema');
 
 // ====================================================================
 // GET: OBTENER todos los Profesionales de Salud
 // ====================================================================
-app.get('/', (req, res) => {
 
-    /////Consulta Profesionales////// done
-    app.get('/profesionales', function(req, res) {
-        "use strict";
+/////Consulta Profesionales////// done
+app.get('/', function(req, res) {
+    "use strict";
 
-        oracledb.getConnection(connAttrs, function(err, connection) {
+    var desdeRegistro = req.query.desdeRegistro || 0;
+    desdeRegistro = Number(desdeRegistro);
+
+    oracledb.getConnection(connAttrs, function(err, connection) {
+        if (err) {
+            // Error connecting to DB
+            res.set('Content-Type', 'application/json');
+            res.status(500).send(JSON.stringify({
+                ok: false,
+                status: 500,
+                message: "Error connecting to DB",
+                detailed_message: err.message
+            }));
+            return;
+        }
+        connection.execute("SELECT img, rut, appaterno, apmaterno, email FROM clin_profesionales", {}, {
+            outFormat: oracledb.OBJECT // Return the result as Object
+        }, function(err, result) {
             if (err) {
-                // Error connecting to DB
                 res.set('Content-Type', 'application/json');
                 res.status(500).send(JSON.stringify({
+                    ok: false,
                     status: 500,
-                    message: "Error connecting to DB",
+                    message: "Error getting the dba_tablespaces",
                     detailed_message: err.message
                 }));
-                return;
+            } else {
+                res.header('Access-Control-Allow-Origin', '*');
+                res.header('Access-Control-Allow-Headers', 'Content-Type');
+                res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+                // res.contentType('application/json').status(200);
+                res.contentType('application/json').status(200).json({
+                    ok: true,
+                    mensaje: 'Get de Profesionales de Salud',
+                    profesionalessalud: result.rows
+                });
+                // res.send(JSON.stringify(result.rows));
+                console.log(result.rows);
             }
-            connection.execute("SELECT img, rut, appaterno, apmaterno, emaail FROM clin_profesionales", {}, {
-                outFormat: oracledb.OBJECT // Return the result as Object
-            }, function(err, result) {
-                if (err) {
-                    res.set('Content-Type', 'application/json');
-                    res.status(500).send(JSON.stringify({
-                        status: 500,
-                        message: "Error getting the dba_tablespaces",
-                        detailed_message: err.message
-                    }));
-                } else {
-                    res.header('Access-Control-Allow-Origin', '*');
-                    res.header('Access-Control-Allow-Headers', 'Content-Type');
-                    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-                    res.contentType('application/json').status(200);
-                    res.send(JSON.stringify(result.rows));
-
-                }
-                // Release the connection
-                connection.release(
-                    function(err) {
-                        if (err) {
-                            console.error(err.message);
-                        } else {
-                            console.log("GET /sendTablespace : Connection released");
-                        }
-                    });
-            });
+            // Release the connection
+            connection.release(
+                function(err) {
+                    if (err) {
+                        console.error(err.message);
+                    } else {
+                        console.log("GET /sendTablespace : Connection released");
+                    }
+                });
         });
     });
-
-
 });
+
 
 
 // ====================================================================

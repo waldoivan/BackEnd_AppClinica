@@ -12,7 +12,8 @@ var colors = require('colors'); // activa uso de colores en consola de Node
 // Inicializa Variables para la aplicación
 // ============================================
 var app = express();
-var port = 3000;
+var port = 4201;
+// var port = 3000;
 var db = 'mongodb://localhost:27017/DB_AppClinica';
 
 
@@ -81,5 +82,6 @@ app.use('/', appRoutes);
 // Escuchar Peticiones
 // ==============================================
 app.listen(port, () => {
-    console.log('Express Server Puerto 3000: ', 'online'.green);
+    console.log('Express Server Puerto 4201: ', 'online'.green);
+    // console.log('Express Server Puerto 3000: ', 'online'.green);
 });
